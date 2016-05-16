@@ -1,0 +1,15 @@
+includes:
+  - 'layer:basic'
+options:
+  basic:
+    packages:
+      - git
+      - wget
+      - python-argcomplete
+      - python-bottle
+      - python-jsonschema
+      - python-libvirt
+      - python-mysqldb
+      - python-paramiko
+      - python-requests
+      - python-yaml

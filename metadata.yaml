@@ -1,0 +1,12 @@
+name: openvim
+summary: Open Virtual Infrastructure Manager
+maintainer: Marco Ceppi <marco@ceppi.net>
+description: |
+  Installs and configures the OpenVIM components from OpenMANO.
+tags:
+  - nfv
+  - telco
+  - osm
+extra-bindings:
+  public:
+  internal:
