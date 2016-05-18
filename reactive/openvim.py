@@ -4,8 +4,8 @@ from charmhelpers.core.hookenv import status_set
 
 import subprocess
 
-@when_not('openvim.installed')
-def install_openvim():
+@when_not('openvim-controller.installed')
+def install_openvim_controller():
     status_set("maintenance", "installing openvim controller")
     render(
         source="init-controller.sh",
@@ -15,4 +15,5 @@ def install_openvim():
         context={}
     )
     subprocess.check_call("sudo -u ubuntu /tmp/init-controller.sh", shell=True)
-    set_state('openvim.installed')
+    set_state("openvim-controller.installed")
+    status_set("active", "openvim controller is running")
