@@ -4,15 +4,10 @@ set -eu
 
 cd $HOME
 
-sudo apt update
-
 # install and configure mysql
-echo "mysql-server mysql-server/root_password password root" | sudo debconf-set-selections
-echo "mysql-server mysql-server/root_password_again password root" | sudo debconf-set-selections
-sudo apt install -y mysql-server
-mysqladmin -u root -proot create vim_db
-mysqladmin -u root -proot create mano_db
-cat << EOF | mysql -u root -proot
+mysqladmin -h {{ db.host() }} -u {{ db.user() }} -p{{ db.password() }} create vim_db
+mysqladmin -h {{ db.host() }} -u {{ db.user() }} -p{{ db.password() }} create mano_db
+cat << EOF | mysql -h {{ db.host() }} -u {{ db.user() }} -p{{ db.password() }}
   CREATE USER 'vim'@'localhost' identified by 'vimpw';
   GRANT ALL PRIVILEGES ON vim_db.* TO 'vim'@'localhost';
   CREATE USER 'mano'@'localhost' identified by 'manopw';
@@ -25,8 +20,8 @@ EOF
 #  python-requests python-novaclient python-keystoneclient python-glanceclient \
 #  python-neutronclient
 git clone https://github.com/wwwtyro/openmano.git openmano
-./openmano/openvim/database_utils/init_vim_db.sh -uvim -pvimpw
-./openmano/openmano/database_utils/init_mano_db.sh -umano -pmanopw
+./openmano/openvim/database_utils/init_vim_db.sh -uvim -pvimpw -h {{ db.host() }}
+./openmano/openmano/database_utils/init_mano_db.sh -umano -pmanopw -h {{ db.host() }}
 ./openmano/scripts/service-openmano.sh openvim start
 
 # prepare communication with compute nodes

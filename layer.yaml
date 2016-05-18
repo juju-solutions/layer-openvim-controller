@@ -1,11 +1,13 @@
 includes:
   - 'layer:basic'
+  - 'interface:mysql'
 options:
   basic:
     packages:
       - git
       - screen
       - wget
+      - mysql-client
       - python-yaml
       - python-libvirt
       - python-bottle

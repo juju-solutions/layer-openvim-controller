@@ -11,3 +11,6 @@ tags:
 extra-bindings:
   public:
   internal:
+requires:
+  db:
+    interface: mysql
