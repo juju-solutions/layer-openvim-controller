@@ -4,12 +4,17 @@ options:
   basic:
     packages:
       - git
+      - screen
       - wget
-      - python-argcomplete
-      - python-bottle
-      - python-jsonschema
-      - python-libvirt
-      - python-mysqldb
-      - python-paramiko
-      - python-requests
       - python-yaml
+      - python-libvirt
+      - python-bottle
+      - python-mysqldb
+      - python-jsonschema
+      - python-paramiko
+      - python-argcomplete
+      - python-requests
+      - python-novaclient
+      - python-keystoneclient
+      - python-glanceclient
+      - python-neutronclient

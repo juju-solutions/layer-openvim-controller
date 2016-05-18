@@ -1,17 +1,18 @@
 from charms.reactive import when, when_not, set_state
+from charmhelpers.core.templating import render
+from charmhelpers.core.hookenv import status_set
 
+import subprocess
 
 @when_not('openvim.installed')
 def install_openvim():
-    # Do your setup here.
-    #
-    # If your charm has other dependencies before it can install,
-    # add those as @when() clauses above., or as additional @when()
-    # decorated handlers below
-    #
-    # See the following for information about reactive charms:
-    #
-    #  * https://jujucharms.com/docs/devel/developer-getting-started
-    #  * https://github.com/juju-solutions/layer-basic#overview
-    #
+    status_set("maintenance", "installing openvim controller")
+    render(
+        source="init-controller.sh",
+        target="/tmp/init-controller.sh",
+        owner="ubuntu",
+        perms=0o775,
+        context={}
+    )
+    subprocess.check_call("sudo -u ubuntu /tmp/init-controller.sh", shell=True)
     set_state('openvim.installed')
