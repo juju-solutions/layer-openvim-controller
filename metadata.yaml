@@ -14,3 +14,6 @@ extra-bindings:
 requires:
   db:
     interface: mysql
+  compute:
+    interface: openvim-compute
+    

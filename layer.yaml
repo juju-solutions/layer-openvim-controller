@@ -1,6 +1,7 @@
 includes:
   - 'layer:basic'
   - 'interface:mysql'
+  - 'interface:openvim-compute'
 options:
   basic:
     packages:
