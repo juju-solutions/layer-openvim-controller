@@ -16,5 +16,14 @@ def install_openvim_controller(mysql):
         context={"db": mysql}
     )
     subprocess.check_call("sudo -u ubuntu /tmp/init-controller.sh", shell=True)
+    render(
+        source="openvimd.cfg",
+        target="/home/ubuntu/openmano/openvim/openvimd.cfg",
+        owner="ubuntu",
+        perms=0o664,
+        context={"db": mysql}
+    )
+    status_set("maintenance", "starting openvim")
+    subprocess.check_call("sudo -u ubuntu /home/ubuntu/bin/service-openmano openvim start", shell=True)
     set_state("openvim-controller.installed")
     status_set("active", "openvim controller is running")

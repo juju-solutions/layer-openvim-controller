@@ -4,16 +4,10 @@ set -eu
 
 cd $HOME
 
-# install and start openvim
-#sudo apt install -y git screen wget python-yaml python-libvirt python-bottle \
-#  python-mysqldb python-jsonschema python-paramiko python-argcomplete \
-#  python-requests python-novaclient python-keystoneclient python-glanceclient \
-#  python-neutronclient
+# install openvim
+rm -rf openmano
 git clone https://github.com/wwwtyro/openmano.git openmano
 ./openmano/openvim/database_utils/init_vim_db.sh -u{{ db.user() }} -p{{ db.password() }} -d{{ db.database() }} -h {{ db.host() }}
-#./openmano/openmano/database_utils/init_mano_db.sh -umano -pmanopw -h {{ db.host() }}
-# TODO: need to configure openvim to use the right DB
-./openmano/scripts/service-openmano.sh openvim start
 
 # prepare communication with compute nodes
 ssh-keygen -f $HOME/.ssh/id_rsa -N ""
