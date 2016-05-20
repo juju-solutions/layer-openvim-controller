@@ -54,12 +54,12 @@ def install_openvim_controller(mysql):
     net_default_uuid = str(net_default_uuid, 'utf-8')
     
     status_set("maintenance", "creating virbr0 network")
-    render(source="virbr0.yaml", target="/tmp/virbr0.yaml", owner="ubuntu", perms=0o664, context={})
-    cmd = 'sudo -u ubuntu OPENVIM_TENANT=%s /home/ubuntu/openmano/openvim/openvim net-create /tmp/virbr0.yaml' % tenant_uuid
+    render(source="net-virbr0.yaml", target="/tmp/net-virbr0.yaml", owner="ubuntu", perms=0o664, context={})
+    cmd = 'sudo -u ubuntu OPENVIM_TENANT=%s /home/ubuntu/openmano/openvim/openvim net-create /tmp/net-virbr0.yaml' % tenant_uuid
     net_virbr0_uuid = subprocess.check_output(cmd, shell=True).split()[0]
     net_virbr0_uuid = str(net_virbr0_uuid, 'utf-8')
-    
-    status_set("maintenance", "creating vm")
+
+    status_set("maintenance", "creating default vm yaml file")
     render(
         source="server.yaml", 
         target="/tmp/server.yaml", 
@@ -72,8 +72,6 @@ def install_openvim_controller(mysql):
             "net_virbr0_uuid": net_virbr0_uuid
         }
     )
-    cmd = 'sudo -u ubuntu OPENVIM_TENANT=%s /home/ubuntu/openmano/openvim/openvim vm-create /tmp/server.yaml' % tenant_uuid
-    subprocess.check_call(cmd, shell=True)
     
     status_set("active", "openvim controller is running")
     set_state('openvim-controller.installed')
@@ -105,4 +103,9 @@ def host_add(compute):
     cmd = 'sudo -u ubuntu /home/ubuntu/openmano/openvim/openvim host-add /tmp/compute-0.json'
     subprocess.check_call(cmd, shell=True)
     cache.set(compute.address(), True)
-    
+
+
+
+
+# cmd = 'sudo -u ubuntu OPENVIM_TENANT=%s /home/ubuntu/openmano/openvim/openvim vm-create /tmp/server.yaml' % tenant_uuid
+# subprocess.check_call(cmd, shell=True)
