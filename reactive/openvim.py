@@ -18,6 +18,8 @@ def install_openvim_controller(mysql):
         context={"db": mysql}
     )
     subprocess.check_call("sudo -u ubuntu /tmp/init-controller.sh", shell=True)
+
+    status_set("maintenance", "starting openvim")
     render(
         source="openvimd.cfg",
         target="/home/ubuntu/openmano/openvim/openvimd.cfg",
@@ -25,10 +27,55 @@ def install_openvim_controller(mysql):
         perms=0o664,
         context={"db": mysql}
     )
-    status_set("maintenance", "starting openvim")
     subprocess.check_call("sudo -u ubuntu /home/ubuntu/bin/service-openmano openvim start", shell=True)
-    set_state("openvim-controller.installed")
+
+    status_set("maintenance", "creating tenant")
+    render(source="tenant.yaml", target="/tmp/tenant.yaml", owner="ubuntu", perms=0o664, context={})
+    cmd = 'sudo -u ubuntu /home/ubuntu/openmano/openvim/openvim tenant-create /tmp/tenant.yaml'
+    tenant_uuid = subprocess.check_output(cmd, shell=True).split()[0]
+    tenant_uuid = str(tenant_uuid, 'utf-8')
+
+    status_set("maintenance", "creating image")
+    render(source="image.yaml", target="/tmp/image.yaml", owner="ubuntu", perms=0o664, context={})
+    cmd = 'sudo -u ubuntu OPENVIM_TENANT=%s /home/ubuntu/openmano/openvim/openvim image-create /tmp/image.yaml' % tenant_uuid
+    image_uuid = subprocess.check_output(cmd, shell=True).split()[0]
+    image_uuid = str(image_uuid, 'utf-8')
+
+    status_set("maintenance", "creating flavor")
+    render(source="flavor.yaml", target="/tmp/flavor.yaml", owner="ubuntu", perms=0o664, context={})
+    cmd = 'sudo -u ubuntu OPENVIM_TENANT=%s /home/ubuntu/openmano/openvim/openvim flavor-create /tmp/flavor.yaml' % tenant_uuid
+    flavor_uuid = subprocess.check_output(cmd, shell=True).split()[0]
+    flavor_uuid = str(flavor_uuid, 'utf-8')
+    
+    status_set("maintenance", "creating default network")
+    render(source="net-default.yaml", target="/tmp/net-default.yaml", owner="ubuntu", perms=0o664, context={})
+    cmd = 'sudo -u ubuntu OPENVIM_TENANT=%s /home/ubuntu/openmano/openvim/openvim net-create /tmp/net-default.yaml' % tenant_uuid
+    net_default_uuid = subprocess.check_output(cmd, shell=True).split()[0]
+    net_default_uuid = str(net_default_uuid, 'utf-8')
+    
+    status_set("maintenance", "creating virbr0 network")
+    render(source="net-virbr0.yaml", target="/tmp/net-virbr0.yaml", owner="ubuntu", perms=0o664, context={})
+    cmd = 'sudo -u ubuntu OPENVIM_TENANT=%s /home/ubuntu/openmano/openvim/openvim net-create /tmp/net-virbr0.yaml' % tenant_uuid
+    net_virbr0_uuid = subprocess.check_output(cmd, shell=True).split()[0]
+    net_virbr0_uuid = str(net_virbr0_uuid, 'utf-8')
+
+    status_set("maintenance", "creating default vm yaml file")
+    render(
+        source="server.yaml", 
+        target="/tmp/server.yaml", 
+        owner="ubuntu", 
+        perms=0o664, 
+        context={
+            "image_uuid": image_uuid,
+            "flavor_uuid": flavor_uuid,
+            "net_default_uuid": net_default_uuid,
+            "net_virbr0_uuid": net_virbr0_uuid
+        }
+    )
+    
     status_set("active", "openvim controller is running")
+    set_state('openvim-controller.installed')
+    
 
 @when('compute.connected', 'openvim-controller.installed')
 def send_ssh_key(compute):
@@ -56,4 +103,9 @@ def host_add(compute):
     cmd = 'sudo -u ubuntu /home/ubuntu/openmano/openvim/openvim host-add /tmp/compute-0.json'
     subprocess.check_call(cmd, shell=True)
     cache.set(compute.address(), True)
-    
+
+
+
+
+# cmd = 'sudo -u ubuntu OPENVIM_TENANT=%s /home/ubuntu/openmano/openvim/openvim vm-create /tmp/server.yaml' % tenant_uuid
+# subprocess.check_call(cmd, shell=True)
