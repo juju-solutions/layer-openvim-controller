@@ -125,6 +125,12 @@ def create_sane_defaults():
         net_virbr0_uuid=net_virbr0_uuid
     )
 
+
+@when_not('db.available')
+def not_ready():
+    status_set('blocked', 'mysql database required')
+
+
 @when('db.available')
 @when_not('openvim-controller.installed')
 def install_openvim_controller(mysql):
