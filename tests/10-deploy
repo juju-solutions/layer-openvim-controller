@@ -1,0 +1,13 @@
+#!/usr/bin/python3
+
+from helper import deploy, relate, wait_for_status
+
+def deploy_openvim():
+    deploy("mysql")
+    deploy("openvim-controller", series="xenial")
+    deploy("openvim-compute", series="xenial")
+    relate("openvim-controller", "mysql")
+    relate("openvim-controller", "openvim-compute")
+
+deploy_openvim()
+wait_for_status("openvim-controller", "active")
