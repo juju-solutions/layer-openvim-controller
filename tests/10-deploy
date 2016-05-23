@@ -9,7 +9,7 @@ def deploy_openvim():
     d.add("openvim-compute", charm="local:xenial/openvim-compute", series="xenial")
     d.relate("openvim-controller:db", "mysql:db")
     d.relate("openvim-controller:compute", "openvim-compute:compute")
-    d.setup()
+    d.setup(timeout=900)
     d.sentry.wait()
 
 deploy_openvim() # yay
