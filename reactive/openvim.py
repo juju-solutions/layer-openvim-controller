@@ -1,12 +1,14 @@
+import os
 import json
+import time
 import subprocess
 
 from charms.reactive import when, when_not, set_state
 from charmhelpers.core.templating import render
 from charmhelpers.core.hookenv import status_set
 from charmhelpers.core.unitdata import kv
-from charmhelpers.core.host import symlink, mkdir, chownr
-from charmhelpers.contrib.unison import create_private_key, create_public_key, ensure_user, run_as_user
+from charmhelpers.core.host import symlink, mkdir, chownr, service_start, service_running
+from charmhelpers.contrib.unison import create_private_key, create_public_key, ensure_user
 
 def sh(cmd):
     return subprocess.check_output(cmd, shell=True)
@@ -58,11 +60,6 @@ def configure_openvim(db):
         perms=0o664,
         context={"db": db}
     )
-
-def start_openvim():
-    status_set("maintenance", "starting openvim")
-    #TODO This should be run as a service.
-    sh_as_openvim("service-openmano openvim start")
 
 # TODO: possibly combine all of these create functions?
 def create_tenant():
@@ -135,6 +132,34 @@ def create_sane_defaults():
         net_virbr0_uuid=net_virbr0_uuid
     )
 
+def install_openvim_service():
+    status_set("maintenance", "installing openvim service")
+    if not os.path.exists('/etc/systemd/system'):
+        os.makedirs('/etc/systemd/system')
+    render(
+        source="openvim.service",
+        target="/etc/systemd/system/openvim.service",
+        owner="root",
+        perms=0o644,
+        context={}
+    )
+
+def openvim_running():
+    try:
+        sh_as_openvim('openvim tenant-list')
+        return True
+    except:
+        return False
+
+def start_openvim():
+    status_set("maintenance", "starting openvim")
+    service_start('openvim')
+    t0 = time.time()
+    while not openvim_running():
+        if time.time() - t0 > 60:
+            raise Exception('Failed to start openvim.')
+        time.sleep(0.25)
+
 @when('db.available')
 @when_not('openvim-controller.installed')
 def install_openvim_controller(mysql):
@@ -144,6 +169,7 @@ def install_openvim_controller(mysql):
     configure_openvim(mysql)
     initialize_openvim_database(mysql)
     generate_ssh_key()
+    install_openvim_service()
     start_openvim()
     create_sane_defaults()
     status_set("active", "running")
@@ -161,10 +187,8 @@ def host_add(compute):
     if cache.get("compute:" + compute.address()):
         return
     #TODO See if there's a charm helper for this.
-    sh_as_openvim("ssh -n -o 'StrictHostKeyChecking no' %s@%s" % (
-        compute.user(),
-        compute.address())
-    )
+    cmd = "ssh -n -o 'StrictHostKeyChecking no' %s@%s"
+    sh_as_openvim(cmd % (compute.user(), compute.address()))
     data = {
         'host': {
             'name': 'compute-0',
