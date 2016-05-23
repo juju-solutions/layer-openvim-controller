@@ -1,13 +1,15 @@
 #!/usr/bin/python3
 
-from helper import deploy, relate, wait_for_status
+import amulet
 
 def deploy_openvim():
-    deploy("mysql")
-    deploy("openvim-controller", series="xenial")
-    deploy("openvim-compute", series="xenial")
-    relate("openvim-controller", "mysql")
-    relate("openvim-controller", "openvim-compute")
+    d = amulet.Deployment()
+    d.add("mysql", series="trusty")
+    d.add("openvim-controller", series="xenial")
+    d.add("openvim-compute", charm="local:xenial/openvim-compute", series="xenial")
+    d.relate("openvim-controller:db", "mysql:db")
+    d.relate("openvim-controller:compute", "openvim-compute:compute")
+    d.setup()
+    d.sentry.wait()
 
-deploy_openvim()
-wait_for_status("openvim-controller", "active")
+deploy_openvim() # yay
