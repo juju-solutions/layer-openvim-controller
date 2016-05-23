@@ -70,36 +70,35 @@ def create_tenant():
     tenant_uuid = str(tenant_uuid, 'utf-8')
     return tenant_uuid
 
-def create_image(tenant_uuid):
+def create_image():
     status_set("maintenance", "creating image")
     render(source="image.yaml", target="/tmp/image.yaml", owner="openvim", perms=0o664, context={})
-    #TODO add the OPENVIM_TENANT env var to the openvim user's env.
-    cmd = 'OPENVIM_TENANT=%s openvim image-create /tmp/image.yaml' % tenant_uuid
+    cmd = 'openvim image-create /tmp/image.yaml'
     image_uuid = sh_as_openvim(cmd).split()[0]
     image_uuid = str(image_uuid, 'utf-8')
     return image_uuid
 
-def create_flavor(tenant_uuid):
+def create_flavor():
     status_set("maintenance", "creating flavor")
     render(source="flavor.yaml", target="/tmp/flavor.yaml", owner="openvim", perms=0o664, context={})
-    cmd = 'OPENVIM_TENANT=%s openvim flavor-create /tmp/flavor.yaml' % tenant_uuid
+    cmd = 'openvim flavor-create /tmp/flavor.yaml'
     flavor_uuid = sh_as_openvim(cmd).split()[0]
     flavor_uuid = str(flavor_uuid, 'utf-8')
     return flavor_uuid
 
 # TODO: especially combine these stupid network functions
-def create_default_network(tenant_uuid):
+def create_default_network():
     status_set("maintenance", "creating default network")
     render(source="net-default.yaml", target="/tmp/net-default.yaml", owner="openvim", perms=0o664, context={})
-    cmd = 'OPENVIM_TENANT=%s openvim net-create /tmp/net-default.yaml' % tenant_uuid
+    cmd = 'openvim net-create /tmp/net-default.yaml'
     net_default_uuid = sh_as_openvim(cmd).split()[0]
     net_default_uuid = str(net_default_uuid, 'utf-8')
     return net_default_uuid
 
-def create_virbr_network(tenant_uuid):
+def create_virbr_network():
     status_set("maintenance", "creating virbr0 network")
     render(source="net-virbr0.yaml", target="/tmp/net-virbr0.yaml", owner="openvim", perms=0o664, context={})
-    cmd = 'OPENVIM_TENANT=%s openvim net-create /tmp/net-virbr0.yaml' % tenant_uuid
+    cmd = 'openvim net-create /tmp/net-virbr0.yaml'
     net_virbr0_uuid = sh_as_openvim(cmd).split()[0]
     net_virbr0_uuid = str(net_virbr0_uuid, 'utf-8')
     return net_virbr0_uuid
@@ -121,10 +120,11 @@ def create_vm_yaml(image_uuid, flavor_uuid, net_default_uuid, net_virbr0_uuid):
 
 def create_sane_defaults():
     tenant_uuid = create_tenant()
-    image_uuid = create_image(tenant_uuid)
-    flavor_uuid = create_flavor(tenant_uuid)
-    net_default_uuid = create_default_network(tenant_uuid)
-    net_virbr0_uuid = create_virbr_network(tenant_uuid)
+    add_openvim_tenant_env_var(tenant_uuid)
+    image_uuid = create_image()
+    flavor_uuid = create_flavor()
+    net_default_uuid = create_default_network()
+    net_virbr0_uuid = create_virbr_network()
     create_vm_yaml(
         image_uuid=image_uuid,
         flavor_uuid=flavor_uuid,
@@ -143,6 +143,20 @@ def install_openvim_service():
         perms=0o644,
         context={}
     )
+
+def add_openvim_tenant_env_var(tenant_uuid):
+    status_set("maintenance", "adding OPENVIM_TENANT environment variable")
+    env_line = 'export OPENVIM_TENANT=%s\n' % tenant_uuid
+    with open('/home/openvim/.profile', 'w+') as f:
+        lines = f.readlines()
+        for line in lines:
+            if env_line == line:
+                return
+        f.seek(0)
+        f.truncate()
+        for line in lines:
+            f.write(line)
+        f.write(env_line)
 
 def openvim_running():
     try:
