@@ -202,21 +202,22 @@ def send_ssh_key(compute):
 @when('compute.available', 'openvim-controller.installed')
 def host_add(compute):
     cache = kv()
-    if cache.get("compute:" + compute.address()):
-        return
-    #TODO See if there's a charm helper for this.
-    cmd = "ssh -n -o 'StrictHostKeyChecking no' %s@%s"
-    sh_as_openvim(cmd % (compute.user(), compute.address()))
-    data = {
-        'host': {
-            'name': 'compute-0',
-            'user': compute.user(),
-            'ip_name': compute.address(),
-            'description': 'compute-0'
+    for node in compute.authorized_nodes():
+        if cache.get("compute:" + node['address']):
+            continue
+        #TODO See if there's a charm helper for this.
+        cmd = "ssh -n -o 'StrictHostKeyChecking no' %s@%s"
+        sh_as_openvim(cmd % (node['user'], node['address']))
+        data = {
+            'host': {
+                'name': 'compute-0',
+                'user': node['user'],
+                'ip_name': node['address'],
+                'description': 'compute-0'
+            }
         }
-    }
-    with open('/tmp/compute-0.json', 'w') as f:
-        json.dump(data, f, indent=4, sort_keys=True)
-    # TODO: openvim run function!
-    sh_as_openvim('openvim host-add /tmp/compute-0.json')
-    cache.set('compute:' + compute.address(), True)
+        with open('/tmp/compute-0.json', 'w') as f:
+            json.dump(data, f, indent=4, sort_keys=True)
+        # TODO: openvim run function!
+        sh_as_openvim('openvim host-add /tmp/compute-0.json')
+        cache.set('compute:' + node['address'], True)
