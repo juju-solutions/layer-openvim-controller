@@ -14,17 +14,18 @@ def deploy_openvim():
     d.sentry.wait()
     return d
 
-def deploy_openvim_and_connect():
-    d = deploy_openvim()
-    address = d.sentry["openvim-controller"][0].info["public-address"]
+def get_openvim_connection(deployment):
+    address = deployment.sentry["openvim-controller"][0].info["public-address"]
     return openvim.connect(address)
 
-def create_server_with_connection(c):
+def create_vm(deployment):
+    c = get_openvim_connection(deployment)
     tenant = c.get_tenants()[0]
     c.set_active_tenant(tenant)
     networks = c.get_networks()
     image = c.get_images()[0]
     flavor = c.get_flavors()[0]
+
     server = c.create_server(
         name="vm",
         description="test vm",
@@ -32,7 +33,12 @@ def create_server_with_connection(c):
         flavor=flavor,
         networks=networks
     )
+
     return server
 
-c = deploy_openvim_and_connect()
-server = create_server_with_connection(c)
+def test_vm_creation():
+    d = deploy_openvim()
+    create_vm(d)
+
+if __name__ == "__main__":
+    test_vm_creation()
