@@ -36,17 +36,9 @@ def create_vm(deployment):
 
     return server
 
-def test_simple_deployment():
+def test_vm_creation():
     d = deploy_openvim()
-    create_vm(d)
-
-def test_add_compute_node():
-    d = deploy_openvim()
-    d.add_unit("openvim-compute")
-    d.sentry.wait(timeout=900)
-    # TODO: validate host count
     create_vm(d)
 
 if __name__ == "__main__":
-    test_simple_deployment()
-    test_add_compute_node()
+    test_vm_creation()
