@@ -2,13 +2,25 @@ import os
 import json
 import time
 import subprocess
+from git import Repo as gitrepo
+from shutil import rmtree
 
 from charms.reactive import when, when_not, set_state
 from charmhelpers.core.templating import render
 from charmhelpers.core.hookenv import status_set
 from charmhelpers.core.unitdata import kv
-from charmhelpers.core.host import symlink, mkdir, chownr, service_start, service_running
-from charmhelpers.contrib.unison import create_private_key, create_public_key, ensure_user
+from charmhelpers.core.host import (
+    symlink,
+    mkdir,
+    chownr,
+    service_start,
+    service_running
+)
+from charmhelpers.contrib.unison import (
+    create_private_key,
+    create_public_key,
+    ensure_user,
+)
 
 def sh(cmd):
     return subprocess.check_output(cmd, shell=True)
@@ -46,9 +58,9 @@ def add_openvim_to_path():
 
 def download_openvim():
     status_set("maintenance", "downloading openvim")
-    #TODO Use the git helper for this. Better, use a resource.
-    sh("rm -rf /opt/openmano")
-    sh("git clone https://github.com/wwwtyro/openmano.git /opt/openmano")
+    if os.path.isdir("/opt/openmano"):
+        rmtree("/opt/openmano")
+    gitrepo.clone_from('https://github.com/wwwtyro/openmano.git', '/opt/openmano')
     chownr('/opt/openmano', owner='openvim', group='openvim', follow_links=False, chowntopdir=True)
 
 def configure_openvim(db):
@@ -205,7 +217,6 @@ def host_add(compute):
     for node in compute.authorized_nodes():
         if cache.get("compute:" + node['address']):
             continue
-        #TODO See if there's a charm helper for this.
         cmd = "ssh -n -o 'StrictHostKeyChecking no' %s@%s"
         sh_as_openvim(cmd % (node['user'], node['address']))
         data = {

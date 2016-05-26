@@ -9,6 +9,7 @@ options:
       - screen
       - wget
       - mysql-client
+      - python3-git
       - python-yaml
       - python-libvirt
       - python-bottle
