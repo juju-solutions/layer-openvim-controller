@@ -11,6 +11,9 @@ class Connection(object):
     def get_tenants(self):
         return self._http_get("tenants")["tenants"]
 
+    def get_hosts(self):
+        return self._http_get("hosts")["hosts"]
+
     def get_networks(self):
         return self._http_get("networks")["networks"]
 
