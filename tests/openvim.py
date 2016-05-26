@@ -11,6 +11,9 @@ class Connection(object):
     def get_tenants(self):
         return self._http_get("tenants")["tenants"]
 
+    def get_hosts(self):
+        return self._http_get("hosts")["hosts"]
+
     def get_networks(self):
         return self._http_get("networks")["networks"]
 
@@ -37,14 +40,14 @@ class Connection(object):
 
     def _http_get(self, path):
         response = requests.get(self.base_url + path)
-        assert(response.status_code == 200)
+        assert response.status_code == 200
         return response.json()
 
     def _http_post(self, path, request_data):
         data = json.dumps(request_data)
         headers = {"content-type": "application/json"}
         response = requests.post(self.base_url + path, data=data, headers=headers)
-        assert(response.status_code == 200)
+        assert response.status_code == 200
         return response.json()
 
 def connect(host, port=9080):
